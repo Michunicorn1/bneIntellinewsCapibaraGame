@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bne IntelliNews Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f4c75 100%);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            background: linear-gradient(to bottom, #0f4c75 0%, #16213e 30%, #1a1a2e 70%, #000000 100%);
+            display: block;
+            border: 3px solid #00d4ff;
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #00d4ff;
+            font-size: 18px;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+            z-index: 100;
+            font-weight: bold;
+        }
+
+        #newsroom-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #ff6b6b;
+            font-size: 14px;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            z-index: 100;
+            text-align: right;
+        }
+
+        #instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(26, 26, 46, 0.95));
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.3);
+            z-index: 1000;
+            max-width: 600px;
+            border: 2px solid #00d4ff;
+        }
+
+        #instructions h1 {
+            color: #00d4ff;
+            margin-bottom: 20px;
+            font-size: 32px;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+        }
+
+        #instructions h2 {
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        #instructions p {
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        #startButton {
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+            font-weight: bold;
+        }
+
+        #startButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+        }
+
+        #victoryMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b, #4ecdc4);
+            color: white;
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 0 60px rgba(0, 212, 255, 0.9);
+            z-index: 1000;
+            display: none;
+            animation: celebration 2s infinite;
+            border: 3px solid #ffffff;
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+            25% { transform: translate(-50%, -50%) scale(1.05) rotate(1deg); }
+            50% { transform: translate(-50%, -50%) scale(1.1) rotate(0deg); }
+            75% { transform: translate(-50%, -50%) scale(1.05) rotate(-1deg); }
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.8), rgba(22, 33, 62, 0.8));
+            border: 2px solid #00d4ff;
+            border-radius: 15px;
+            padding: 15px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .control-btn:hover {
+            background: linear-gradient(45deg, rgba(0, 212, 255, 1), rgba(255, 107, 107, 0.8));
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.6);
+        }
+
+        .tech-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            #instructions {
+                padding: 30px;
+                max-width: 90%;
+            }
+            #instructions h1 {
+                font-size: 24px;
+            }
+            .controls {
+                bottom: 10px;
+            }
+            .control-btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div class="tech-grid"></div>
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <div>🏆 Stories: <span id="score">0</span>/18</div>
+            <div>💖 Lives: <span id="lives">3</span></div>
+            <div>⏱️ Time: <span id="time">0</span>s</div>
+            <div>📍 Location: <span id="location">Berlin Newsroom</span></div>
+        </div>
+
+        <div id="newsroom-info">
+            <div>🦫 #podercapibara</div>
+            <div>📰 bne IntelliNews</div>
+            <div>🌍 Berlin → LatAm</div>
+        </div>
+
+        <div id="instructions">
+            <h1>🦫 bne IntelliNews Adventure</h1>
+            <h2>📰 International Journalism Mission</h2>
+            <p>¡Ayuda al capibara periodista súper rápido a recolectar noticias desde Berlin!</p>
+            <p>🎮 <strong>Controles:</strong> ← → Moverse | ↑ Saltar | Espacio Saltar</p>
+            <p>📊 <strong>Misión:</strong> Recolectar 18 items de periodismo internacional</p>
+            <p>🚀 <strong>Nuevas mejoras:</strong> ¡Movimiento más rápido y salto mejorado!</p>
+            <p>🌎 <strong>Incluye:</strong> AI Tools, LatAm countries, y conceptos de journalism</p>
+            <button id="startButton">🚀 ¡Comenzar Cobertura Rápida!</button>
+        </div>
+
+        <div id="victoryMessage">
+            🎉 ¡BREAKING NEWS! 🎉<br>
+            ¡El capibara completó la cobertura internacional!<br>
+            📰 ¡EDICIÓN ESPECIAL LISTA! 📰
+        </div>
+
+        <div class="controls">
+            <button class="control-btn" id="leftBtn">←</button>
+            <button class="control-btn" id="jumpBtn">🚀</button>
+            <button class="control-btn" id="rightBtn">→</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const game = {
+            started: false,
+            startTime: Date.now(),
+            score: 0,
+            lives: 3,
+            gravity: 0.6,
+            platforms: [],
+            collectibles: [],
+            enemies: [],
+            particles: [],
+            currentLocation: 'Berlin Newsroom'
+        };
+
+        // Selección optimizada de solo 18 palabras más relevantes
+        const selectedItems = [
+            // AI Tools (4)
+            'ChatGPT', 'Claude', 'Perplexity', 'Copilot',
+            // LatAm Countries (7)
+            'Argentina', 'Brazil', 'Colombia', 'Mexico', 'Chile', 'Peru', 'Venezuela',
+            // Journalism Concepts (7)
+            'Tech', 'Business', 'Politics', 'Breaking News', 'Analysis', 'Berlin', 'LatAm'
+        ];
+
+        const player = {
+            x: 100,
+            y: 400,
+            width: 55,
+            height: 45,
+            vx: 0,
+            vy: 0,
+            speed: 12, // Aumentado de 8 a 12
+            jumpPower: 22, // Aumentado de 18 a 22
+            onGround: false,
+            color: '#8B4513',
+            hasLaptop: true
+        };
+
+        const keys = {};
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        document.getElementById('leftBtn').addEventListener('touchstart', () => keys['ArrowLeft'] = true);
+        document.getElementById('leftBtn').addEventListener('touchend', () => keys['ArrowLeft'] = false);
+        document.getElementById('rightBtn').addEventListener('touchstart', () => keys['ArrowRight'] = true);
+        document.getElementById('rightBtn').addEventListener('touchend', () => keys['ArrowRight'] = false);
+        document.getElementById('jumpBtn').addEventListener('touchstart', () => keys['ArrowUp'] = true);
+        document.getElementById('jumpBtn').addEventListener('touchend', () => keys['ArrowUp'] = false);
+
+        document.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
+
+        function generatePlatforms() {
+            game.platforms = [];
+            
+            game.platforms.push({
+                x: 0,
+                y: canvas.height - 60,
+                width: canvas.width,
+                height: 60,
+                color: '#1a1a2e',
+                type: 'newsroom'
+            });
+
+            for (let i = 0; i < 15; i++) {
+                game.platforms.push({
+                    x: Math.random() * (canvas.width - 200),
+                    y: Math.random() * (canvas.height - 250) + 100,
+                    width: 120 + Math.random() * 80,
+                    height: 25,
+                    color: '#16213e',
+                    type: 'tech'
+                });
+            }
+        }
+
+        function generateCollectibles() {
+            game.collectibles = [];
+            
+            selectedItems.forEach((item, index) => {
+                const platform = game.platforms[Math.floor(Math.random() * game.platforms.length)];
+                let itemType = 'journalism';
+                let itemColor = `hsl(${200 + index * 15}, 70%, 60%)`;
+                
+                if (['ChatGPT', 'Claude', 'Perplexity', 'Copilot'].includes(item)) {
+                    itemType = 'ai';
+                    itemColor = `hsl(${60 + index * 15}, 80%, 70%)`;
+                } else if (['Argentina', 'Brazil', 'Colombia', 'Mexico', 'Chile', 'Peru', 'Venezuela'].includes(item)) {
+                    itemType = 'country';
+                    itemColor = `hsl(${120 + index * 15}, 75%, 65%)`;
+                }
+                
+                game.collectibles.push({
+                    x: platform.x + Math.random() * Math.max(0, platform.width - 80),
+                    y: platform.y - 35,
+                    width: Math.max(70, Math.min(item.length * 9, 130)),
+                    height: 30,
+                    word: item,
+                    type: itemType,
+                    color: itemColor,
+                    bounce: Math.random() * Math.PI,
+                    glow: 0
+                });
+            });
+        }
+
+        function generateEnemies() {
+            game.enemies = [];
+            
+            const enemyTypes = ['👹', '🤖', '💀', '👾', '🦹'];
+            
+            for (let i = 0; i < 6; i++) {
+                const platform = game.platforms[Math.floor(Math.random() * (game.platforms.length - 1)) + 1];
+                game.enemies.push({
+                    x: platform.x + Math.random() * Math.max(0, platform.width - 35),
+                    y: platform.y - 35,
+                    width: 30,
+                    height: 30,
+                    vx: (Math.random() - 0.5) * 3,
+                    color: '#ff0040',
+                    platform: platform,
+                    type: enemyTypes[Math.floor(Math.random() * enemyTypes.length)],
+                    glow: 0
+                });
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            ctx.fillStyle = 'white';
+            ctx.fillRect(player.x + 12, player.y + 10, 10, 10);
+            ctx.fillRect(player.x + 28, player.y + 10, 10, 10);
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(player.x + 14, player.y + 12, 6, 6);
+            ctx.fillRect(player.x + 30, player.y + 12, 6, 6);
+            
+            ctx.fillStyle = 'black';
+            ctx.fillRect(player.x + 22, player.y + 24, 8, 5);
+            
+            if (player.hasLaptop) {
+                ctx.fillStyle = '#333';
+                ctx.fillRect(player.x + 8, player.y + 30, 16, 10);
+                ctx.fillStyle = '#00d4ff';
+                ctx.fillRect(player.x + 10, player.y + 32, 12, 6);
+            }
+            
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillRect(player.x + 5, player.y - 5, 40, 8);
+            ctx.fillStyle = 'white';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('PRESS', player.x + 25, player.y + 2);
+        }
+
+        function drawPlatforms() {
+            game.platforms.forEach(platform => {
+                if (platform.type === 'newsroom') {
+                    ctx.fillStyle = platform.color;
+                    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                    
+                    ctx.fillStyle = '#00d4ff';
+                    for (let i = 0; i < 10; i++) {
+                        ctx.fillRect(platform.x + i * 100, platform.y + 10, 80, 2);
+                        ctx.fillRect(platform.x + i * 100, platform.y + 20, 60, 2);
+                    }
+                } else {
+                    ctx.fillStyle = platform.color;
+                    ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                    
+                    ctx.fillStyle = '#00d4ff';
+                    ctx.fillRect(platform.x, platform.y, platform.width, 3);
+                    
+                    ctx.strokeStyle = '#00d4ff';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(platform.x, platform.y + 10);
+                    ctx.lineTo(platform.x + platform.width, platform.y + 10);
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function drawCollectibles() {
+            game.collectibles.forEach(item => {
+                item.bounce += 0.15;
+                item.glow += 0.12;
+                const bounceY = item.y + Math.sin(item.bounce) * 8;
+                const glowIntensity = Math.sin(item.glow) * 0.4 + 0.8;
+                
+                ctx.shadowColor = item.color;
+                ctx.shadowBlur = 18 * glowIntensity;
+                
+                ctx.fillStyle = item.color;
+                ctx.fillRect(item.x, bounceY, item.width, item.height);
+                
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(item.x, bounceY, item.width, item.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'left';
+                
+                let icon = '';
+                if (item.type === 'ai') icon = '🤖';
+                else if (item.type === 'country') icon = '🌎';
+                else icon = '📝';
+                
+                ctx.fillText(icon, item.x + 5, bounceY + 14);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(item.word, item.x + item.width/2, bounceY + item.height/2 + 8);
+                
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawEnemies() {
+            game.enemies.forEach(enemy => {
+                enemy.glow += 0.18;
+                const glowIntensity = Math.sin(enemy.glow) * 0.4 + 0.6;
+                
+                ctx.shadowColor = enemy.color;
+                ctx.shadowBlur = 20 * glowIntensity;
+                
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(enemy.type, enemy.x + enemy.width/2, enemy.y + enemy.height/2 + 5);
+                
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function createParticles(x, y, color, type = 'collect') {
+            for (let i = 0; i < 20; i++) {
+                game.particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: Math.random() * -10,
+                    color: color,
+                    life: 50,
+                    type: type,
+                    size: Math.random() * 5 + 3
+                });
+            }
+        }
+
+        function drawParticles() {
+            game.particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vy += 0.3;
+                particle.life--;
+                
+                if (particle.life <= 0) {
+                    game.particles.splice(index, 1);
+                    return;
+                }
+                
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life / 50;
+                
+                if (particle.type === 'collect') {
+                    ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.globalAlpha = 1;
+            });
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+            for (let i = 0; i < 60; i++) {
+                const x = (Date.now() * 0.03 + i * 40) % canvas.width;
+                const y = (Date.now() * 0.06 + i * 25) % canvas.height;
+                ctx.fillRect(x, y, 2, 20);
+            }
+            
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.25)';
+            ctx.fillRect(50, 50, 100, 60);
+            ctx.fillRect(canvas.width - 150, 50, 100, 60);
+            
+            ctx.fillStyle = '#00d4ff';
+            ctx.font = '10px Arial';
+            ctx.fillText('LIVE: Berlin', 55, 70);
+            ctx.fillText('Fast Mode', 55, 85);
+            ctx.fillText('AI Analysis', canvas.width - 145, 70);
+            ctx.fillText('Turbo News', canvas.width - 145, 85);
+        }
+
+        function checkCollisions() {
+            player.onGround = false;
+            game.platforms.forEach(platform => {
+                if (player.x < platform.x + platform.width &&
+                    player.x + player.width > platform.x &&
+                    player.y < platform.y + platform.height &&
+                    player.y + player.height > platform.y) {
+                    
+                    if (player.vy > 0) {
+                        player.y = platform.y - player.height;
+                        player.vy = 0;
+                        player.onGround = true;
+                    }
+                }
+            });
+
+            game.collectibles.forEach((item, index) => {
+                if (player.x < item.x + item.width &&
+                    player.x + player.width > item.x &&
+                    player.y < item.y + item.height &&
+                    player.y + player.height > item.y) {
+                    
+                    createParticles(item.x + item.width/2, item.y + item.height/2, item.color, 'collect');
+                    game.collectibles.splice(index, 1);
+                    game.score++;
+                    
+                    if (game.score % 5 === 0) {
+                        const locations = ['Berlin HQ', 'LatAm Bureau', 'Remote Office', 'Tech Hub'];
+                        game.currentLocation = locations[Math.floor(game.score / 5) % locations.length];
+                        document.getElementById('location').textContent = game.currentLocation;
+                    }
+                    
+                    if (game.score >= selectedItems.length) {
+                        document.getElementById('victoryMessage').style.display = 'block';
+                    }
+                }
+            });
+
+            game.enemies.forEach(enemy => {
+                if (player.x < enemy.x + enemy.width &&
+                    player.x + player.width > enemy.x &&
+                    player.y < enemy.y + enemy.height &&
+                    player.y + player.height > enemy.y) {
+                    
+                    createParticles(player.x + player.width/2, player.y + player.height/2, '#ff0040', 'damage');
+                    game.lives--;
+                    
+                    if (game.lives <= 0) {
+                        resetGame();
+                    } else {
+                        player.x = 100;
+                        player.y = 400;
+                        player.vx = 0;
+                        player.vy = 0;
+                    }
+                }
+            });
+        }
+
+        function updateEnemies() {
+            game.enemies.forEach(enemy => {
+                enemy.x += enemy.vx;
+                
+                if (enemy.x <= enemy.platform.x || enemy.x + enemy.width >= enemy.platform.x + enemy.platform.width) {
+                    enemy.vx = -enemy.vx;
+                }
+            });
+        }
+
+        function updateGame() {
+            if (!game.started) return;
+
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.vx = -player.speed;
+            } else if (keys['ArrowRight'] || keys['d']) {
+                player.vx = player.speed;
+            } else {
+                player.vx *= 0.8;
+            }
+
+            if ((keys['ArrowUp'] || keys['w'] || keys[' ']) && player.onGround) {
+                player.vy = -player.jumpPower;
+                player.onGround = false;
+            }
+
+            player.x += player.vx;
+            player.y += player.vy;
+            player.vy += game.gravity;
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+            if (player.y > canvas.height) {
+                game.lives--;
+                if (game.lives <= 0) {
+                    resetGame();
+                } else {
+                    player.x = 100;
+                    player.y = 400;
+                    player.vx = 0;
+                    player.vy = 0;
+                }
+            }
+
+            updateEnemies();
+            checkCollisions();
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = game.score;
+            document.getElementById('lives').textContent = game.lives;
+            document.getElementById('time').textContent = Math.floor((Date.now() - game.startTime) / 1000);
+        }
+
+        function resetGame() {
+            game.started = false;
+            game.score = 0;
+            game.lives = 3;
+            game.startTime = Date.now();
+            game.currentLocation = 'Berlin Newsroom';
+            player.x = 100;
+            player.y = 400;
+            player.vx = 0;
+            player.vy = 0;
+            document.getElementById('instructions').style.display = 'block';
+            document.getElementById('victoryMessage').style.display = 'none';
+            document.getElementById('location').textContent = 'Berlin Newsroom';
+            init();
+        }
+
+        function init() {
+            generatePlatforms();
+            generateCollectibles();
+            generateEnemies();
+            game.particles = [];
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawPlatforms();
+            drawCollectibles();
+            drawEnemies();
+            drawPlayer();
+            drawParticles();
+            
+            updateGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.getElementById('startButton').addEventListener('click', () => {
+            game.started = true;
+            game.startTime = Date.now();
+            document.getElementById('instructions').style.display = 'none';
+            init();
+        });
+
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>
